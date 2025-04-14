@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/mark3labs/mcphost/pkg/llm/deepseek"
 	"os"
 	"strings"
 	"time"
@@ -34,6 +35,7 @@ var (
 	anthropicBaseURL string // Base URL for Anthropic API
 	openaiAPIKey     string
 	anthropicAPIKey  string
+	deepseekAPIKey   string
 )
 
 const (
@@ -88,6 +90,7 @@ func init() {
 	flags.StringVar(&anthropicBaseURL, "anthropic-url", "", "base URL for Anthropic API (defaults to api.anthropic.com)")
 	flags.StringVar(&openaiAPIKey, "openai-api-key", "", "OpenAI API key")
 	flags.StringVar(&anthropicAPIKey, "anthropic-api-key", "", "Anthropic API key")
+	flags.StringVar(&deepseekAPIKey, "deepseek-api-key", "", "DeepSeek API key")
 }
 
 // Add new function to create provider
@@ -132,7 +135,12 @@ func createProvider(modelString string) (llm.Provider, error) {
 			)
 		}
 		return openai.NewProvider(apiKey, openaiBaseURL, model), nil
-
+	case "deepseek":
+		apiKey := os.Getenv("DEEPSEEK_API_KEY")
+		if apiKey == "" {
+			return nil, fmt.Errorf("DeepSeek API key not provided. Use DEEPSEEK_API_KEY environment variable")
+		}
+		return deepseek.NewProvider(apiKey, "https://api.deepseek.com", model), nil
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", provider)
 	}
